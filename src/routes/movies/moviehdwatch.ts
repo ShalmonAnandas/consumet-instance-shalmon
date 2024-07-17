@@ -7,14 +7,14 @@ import { redis } from '../../main';
 import { Redis } from 'ioredis';
 
 const routes = async (fastify: FastifyInstance, options: RegisterOptions) => {
-  const flixhq = new MOVIES.MovieHdWatch();
+  const movieshd = new MOVIES.MovieHdWatch();
 
   fastify.get('/', (_, rp) => {
     rp.status(200).send({
       intro:
-        "Welcome to the flixhq provider: check out the provider's website @ https://flixhq.to/",
+        "Welcome to the MoviesHDWatch provider: check out the provider's website @ https://movieshd.to/",
       routes: ['/:query', '/info', '/watch', '/recent-shows', '/recent-movies', '/trending', '/servers'],
-      documentation: 'https://docs.consumet.org/#tag/flixhq',
+      documentation: 'https://docs.consumet.org/#tag/movieshd',
     });
   });
 
@@ -26,11 +26,11 @@ const routes = async (fastify: FastifyInstance, options: RegisterOptions) => {
     let res = redis
       ? await cache.fetch(
         redis as Redis,
-        `flixhq:${query}:${page}`,
-        async () => await flixhq.search(query, page ? page : 1),
+        `movieshd:${query}:${page}`,
+        async () => await movieshd.search(query, page ? page : 1),
         60 * 60 * 6,
       )
-      : await flixhq.search(query, page ? page : 1);
+      : await movieshd.search(query, page ? page : 1);
 
     reply.status(200).send(res);
   });
@@ -39,11 +39,11 @@ const routes = async (fastify: FastifyInstance, options: RegisterOptions) => {
     let res = redis
       ? await cache.fetch(
         redis as Redis,
-        `flixhq:recent-shows`,
-        async () => await flixhq.fetchRecentTvShows(),
+        `movieshd:recent-shows`,
+        async () => await movieshd.fetchRecentTvShows(),
         60 * 60 * 3,
       )
-      : await flixhq.fetchRecentTvShows();
+      : await movieshd.fetchRecentTvShows();
 
     reply.status(200).send(res);
   });
@@ -52,11 +52,11 @@ const routes = async (fastify: FastifyInstance, options: RegisterOptions) => {
     let res = redis
       ? await cache.fetch(
         redis as Redis,
-        `flixhq:recent-movies`,
-        async () => await flixhq.fetchRecentMovies(),
+        `movieshd:recent-movies`,
+        async () => await movieshd.fetchRecentMovies(),
         60 * 60 * 3,
       )
-      : await flixhq.fetchRecentMovies();
+      : await movieshd.fetchRecentMovies();
 
     reply.status(200).send(res);
   });
@@ -67,8 +67,8 @@ const routes = async (fastify: FastifyInstance, options: RegisterOptions) => {
       if (!type) {
         const res = {
           results: [
-            ...(await flixhq.fetchTrendingMovies()),
-            ...(await flixhq.fetchTrendingTvShows()),
+            ...(await movieshd.fetchTrendingMovies()),
+            ...(await movieshd.fetchTrendingTvShows()),
           ],
         };
         return reply.status(200).send(res);
@@ -77,16 +77,16 @@ const routes = async (fastify: FastifyInstance, options: RegisterOptions) => {
       let res = redis
         ? await cache.fetch(
           redis as Redis,
-          `flixhq:trending:${type}`,
+          `movieshd:trending:${type}`,
           async () =>
             type === 'tv'
-              ? await flixhq.fetchTrendingTvShows()
-              : await flixhq.fetchTrendingMovies(),
+              ? await movieshd.fetchTrendingTvShows()
+              : await movieshd.fetchTrendingMovies(),
           60 * 60 * 3,
         )
         : type === 'tv'
-          ? await flixhq.fetchTrendingTvShows()
-          : await flixhq.fetchTrendingMovies();
+          ? await movieshd.fetchTrendingTvShows()
+          : await movieshd.fetchTrendingMovies();
 
       reply.status(200).send(res);
     } catch (error) {
@@ -109,11 +109,11 @@ const routes = async (fastify: FastifyInstance, options: RegisterOptions) => {
       let res = redis
         ? await cache.fetch(
           redis as Redis,
-          `flixhq:info:${id}`,
-          async () => await flixhq.fetchMediaInfo(id),
+          `movieshd:info:${id}`,
+          async () => await movieshd.fetchMediaInfo(id),
           60 * 60 * 3,
         )
-        : await flixhq.fetchMediaInfo(id);
+        : await movieshd.fetchMediaInfo(id);
 
       reply.status(200).send(res);
     } catch (err) {
@@ -141,11 +141,11 @@ const routes = async (fastify: FastifyInstance, options: RegisterOptions) => {
       let res = redis
         ? await cache.fetch(
           redis as Redis,
-          `flixhq:watch:${episodeId}:${mediaId}:${server}`,
-          async () => await flixhq.fetchEpisodeSources(episodeId, mediaId, server),
+          `movieshd:watch:${episodeId}:${mediaId}:${server}`,
+          async () => await movieshd.fetchEpisodeSources(episodeId, mediaId, server),
           60 * 30,
         )
-        : await flixhq.fetchEpisodeSources(episodeId, mediaId, server);
+        : await movieshd.fetchEpisodeSources(episodeId, mediaId, server);
 
       reply.status(200).send(res);
     } catch (err) {
@@ -162,11 +162,11 @@ const routes = async (fastify: FastifyInstance, options: RegisterOptions) => {
       let res = redis
         ? await cache.fetch(
           redis as Redis,
-          `flixhq:servers:${episodeId}:${mediaId}`,
-          async () => await flixhq.fetchEpisodeServers(episodeId, mediaId),
+          `movieshd:servers:${episodeId}:${mediaId}`,
+          async () => await movieshd.fetchEpisodeServers(episodeId, mediaId),
           60 * 30,
         )
-        : await flixhq.fetchEpisodeServers(episodeId, mediaId);
+        : await movieshd.fetchEpisodeServers(episodeId, mediaId);
 
       reply.status(200).send(res);
     } catch (error) {
@@ -184,11 +184,11 @@ const routes = async (fastify: FastifyInstance, options: RegisterOptions) => {
   //     let res = redis
   //       ? await cache.fetch(
   //         redis as Redis,
-  //         `flixhq:country:${country}:${page}`,
-  //         async () => await flixhq.fetchByCountry(country, page),
+  //         `movieshd:country:${country}:${page}`,
+  //         async () => await movieshd.fetchByCountry(country, page),
   //         60 * 60 * 3,
   //       )
-  //       : await flixhq.fetchByCountry(country, page);
+  //       : await movieshd.fetchByCountry(country, page);
 
   //     reply.status(200).send(res);
   //   } catch (error) {
@@ -207,11 +207,11 @@ const routes = async (fastify: FastifyInstance, options: RegisterOptions) => {
   //     let res = redis
   //       ? await cache.fetch(
   //         redis as Redis,
-  //         `flixhq:genre:${genre}:${page}`,
-  //         async () => await flixhq.fetchByGenre(genre, page),
+  //         `movieshd:genre:${genre}:${page}`,
+  //         async () => await movieshd.fetchByGenre(genre, page),
   //         60 * 60 * 3,
   //       )
-  //       : await flixhq.fetchByGenre(genre, page);
+  //       : await movieshd.fetchByGenre(genre, page);
 
   //     reply.status(200).send(res);
   //   } catch (error) {
