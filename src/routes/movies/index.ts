@@ -7,13 +7,15 @@ import dramacool from './dramacool';
 import fmovies from './fmovies';
 import movieshd from './moviehdwatch';
 import goku from './goku';
+import kissasian from './kissasian';
 const routes = async (fastify: FastifyInstance, options: RegisterOptions) => {
   await fastify.register(flixhq, { prefix: '/flixhq' });
   await fastify.register(viewasian, { prefix: '/viewasian' });
   await fastify.register(dramacool, { prefix: '/dramacool' });
   await fastify.register(fmovies, { prefix: '/fmovies' });
-  await fastify.register(movieshd, { prefix: '/movieshd' })
+  await fastify.register(movieshd, { prefix: '/movieshd' });
   await fastify.register(goku, { prefix: '/goku' });
+  await fastify.register(kissasian, { prefix: '/kissasian' });
   fastify.get('/', async (request: any, reply: any) => {
     reply.status(200).send('Welcome to Consumet Movies and TV Shows');
   });
