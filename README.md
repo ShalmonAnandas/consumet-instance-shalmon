@@ -1,3 +1,10 @@
+## Changes compared to source repo
+
+ - [x] Added sources Goku, MoviesHDTS, KissAsian
+
+---
+
+
 <p align="center">
   <a href="https://consumet.org/">
     <img alt="Consumet" src="https://consumet.org/images/consumetlogo.png" width="150">
