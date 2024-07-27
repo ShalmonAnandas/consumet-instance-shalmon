@@ -1,13 +1,43 @@
 import { FastifyRequest, FastifyReply, FastifyInstance, RegisterOptions } from 'fastify';
 import { MOVIES } from '@consumet/extensions';
-import { StreamingServers } from '@consumet/extensions/dist/models';
+import { IMovieResult, ISearch, StreamingServers } from '@consumet/extensions/dist/models';
 
 import cache from '../../utils/cache';
 import { redis } from '../../main';
 import { Redis } from 'ioredis';
+import axios from 'axios';
 
 const routes = async (fastify: FastifyInstance, options: RegisterOptions) => {
   const goku = new MOVIES.Goku();
+
+  async function getBase64ImageFromUrl(imageUrl: string): Promise<string | null> {
+    try {
+      const image = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+      const buffer = Buffer.from(image.data, 'binary');
+      const base64Image = buffer.toString('base64');
+      return `data:image/jpeg;base64,${base64Image}`;
+    } catch (error) {
+      console.error('Error fetching image:', error);
+      return null;
+    }
+  }
+
+  async function updateMoviesWithBase64Images(movies: IMovieResult[]): Promise<IMovieResult[]> {
+    const updatedMovies = await Promise.all(movies.map(async (movie) => {
+      const base64Image = await getBase64ImageFromUrl(movie.image!);
+      return { ...movie, base64Image };
+    }));
+    return updatedMovies;
+  }
+
+  async function updateMoviesWithBase64ImagesForSearch(movies: ISearch<IMovieResult>): Promise<ISearch<IMovieResult>> {
+    const updatedMovies = await Promise.all(movies.results.map(async (movie) => {
+      const base64Image = await getBase64ImageFromUrl(movie.image!);
+      return { ...movie, base64Image };
+    }));
+    movies["results"] = updatedMovies;
+    return movies;
+  }
 
   fastify.get('/', (_, rp) => {
     rp.status(200).send({
@@ -32,7 +62,9 @@ const routes = async (fastify: FastifyInstance, options: RegisterOptions) => {
       )
       : await goku.search(query, page ? page : 1);
 
-    reply.status(200).send(res);
+    let updatedReply = await updateMoviesWithBase64ImagesForSearch(res);
+
+    reply.status(200).send(updatedReply);
   });
 
   fastify.get('/recent-shows', async (request: FastifyRequest, reply: FastifyReply) => {
@@ -45,7 +77,9 @@ const routes = async (fastify: FastifyInstance, options: RegisterOptions) => {
       )
       : await goku.fetchRecentTvShows();
 
-    reply.status(200).send(res);
+    let updatedReply = await updateMoviesWithBase64Images(res);
+
+    reply.status(200).send(updatedReply);
   });
 
   fastify.get('/recent-movies', async (request: FastifyRequest, reply: FastifyReply) => {
@@ -58,7 +92,9 @@ const routes = async (fastify: FastifyInstance, options: RegisterOptions) => {
       )
       : await goku.fetchRecentMovies();
 
-    reply.status(200).send(res);
+    let updatedReply = await updateMoviesWithBase64Images(res);
+
+    reply.status(200).send(updatedReply);
   });
 
   fastify.get('/trending', async (request: FastifyRequest, reply: FastifyReply) => {
@@ -71,7 +107,8 @@ const routes = async (fastify: FastifyInstance, options: RegisterOptions) => {
             ...(await goku.fetchTrendingTvShows()),
           ],
         };
-        return reply.status(200).send(res);
+        let updatedReply = await updateMoviesWithBase64Images(res.results);
+        return reply.status(200).send(res["results"] = updatedReply);
       }
 
       let res = redis
@@ -88,7 +125,9 @@ const routes = async (fastify: FastifyInstance, options: RegisterOptions) => {
           ? await goku.fetchTrendingTvShows()
           : await goku.fetchTrendingMovies();
 
-      reply.status(200).send(res);
+      let updatedReply = await updateMoviesWithBase64Images(res);
+
+      reply.status(200).send(updatedReply);
     } catch (error) {
       reply.status(500).send({
         message:
@@ -114,6 +153,12 @@ const routes = async (fastify: FastifyInstance, options: RegisterOptions) => {
           60 * 60 * 3,
         )
         : await goku.fetchMediaInfo(id);
+
+      let updatedImage = await getBase64ImageFromUrl(res.image!);
+      res.image = updatedImage!;
+
+      let updatedCover = await getBase64ImageFromUrl(res.cover!);
+      res.cover = updatedCover!;
 
       reply.status(200).send(res);
     } catch (err) {
