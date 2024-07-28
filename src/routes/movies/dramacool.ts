@@ -6,27 +6,6 @@ import axios from 'axios';
 const routes = async (fastify: FastifyInstance, options: RegisterOptions) => {
   const dramacool = new MOVIES.DramaCool();
 
-  async function getBase64ImageFromUrl(imageUrl: string): Promise<string | null> {
-    try {
-      const image = await axios.get(imageUrl, { responseType: 'arraybuffer' });
-      const buffer = Buffer.from(image.data, 'binary');
-      const base64Image = buffer.toString('base64');
-      return `data:image/jpeg;base64,${base64Image}`;
-    } catch (error) {
-      console.error('Error fetching image:', error);
-      return null;
-    }
-  }
-
-  async function updateMoviesWithBase64ImagesForSearch(movies: ISearch<IMovieResult>): Promise<ISearch<IMovieResult>> {
-    const updatedMovies = await Promise.all(movies.results.map(async (movie) => {
-      const base64Image = await getBase64ImageFromUrl(movie.image!);
-      return { ...movie, base64Image };
-    }));
-    movies["results"] = updatedMovies;
-    return movies;
-  }
-
   fastify.get('/', (_, rp) => {
     rp.status(200).send({
       intro:
@@ -43,9 +22,7 @@ const routes = async (fastify: FastifyInstance, options: RegisterOptions) => {
 
     const res = await dramacool.search(query, page);
 
-    let updatedMovies = await updateMoviesWithBase64ImagesForSearch(res);
-
-    reply.status(200).send(updatedMovies);
+    reply.status(200).send(res);
   });
 
   fastify.get('/info', async (request: FastifyRequest, reply: FastifyReply) => {
@@ -60,12 +37,6 @@ const routes = async (fastify: FastifyInstance, options: RegisterOptions) => {
       const res = await dramacool
         .fetchMediaInfo(id)
         .catch((err) => reply.status(404).send({ message: err }));
-
-      let updatedImage = await getBase64ImageFromUrl(res.image!);
-      res.image = updatedImage!;
-
-      let updatedCover = await getBase64ImageFromUrl(res.cover!);
-      res.cover = updatedCover!;
 
       reply.status(200).send(res);
     } catch (err) {

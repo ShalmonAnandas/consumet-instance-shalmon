@@ -12,7 +12,7 @@ const routes = async (fastify: FastifyInstance, options: RegisterOptions) => {
 
   async function getBase64ImageFromUrl(imageUrl: string): Promise<string | null> {
     try {
-      const image = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+      const image = await axios.get(imageUrl.replace("250x400", "1000x1600"), { responseType: 'arraybuffer' });
       const buffer = Buffer.from(image.data, 'binary');
       const base64Image = buffer.toString('base64');
       return `data:image/jpeg;base64,${base64Image}`;
