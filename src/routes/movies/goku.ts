@@ -101,14 +101,13 @@ const routes = async (fastify: FastifyInstance, options: RegisterOptions) => {
     const type = (request.query as { type: string }).type;
     try {
       if (!type) {
-        const res = {
-          results: [
-            ...(await goku.fetchTrendingMovies()),
-            ...(await goku.fetchTrendingTvShows()),
-          ],
-        };
-        let updatedReply = await updateMoviesWithBase64Images(res.results);
-        return reply.status(200).send(res["results"] = updatedReply);
+        const res = [
+          ...(await goku.fetchTrendingMovies()),
+          ...(await goku.fetchTrendingTvShows()),
+        ];
+
+        let updatedReply = await updateMoviesWithBase64Images(res);
+        return reply.status(200).send(updatedReply);
       }
 
       let res = redis
