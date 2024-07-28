@@ -82,7 +82,7 @@ const routes = async (fastify: FastifyInstance, options: RegisterOptions) => {
 
     let updatedReply = await updateMoviesWithBase64Images(res);
 
-    reply.status(200).send(updatedReply);
+    reply.status(200).send(updatedReply.slice(0, 10));
   });
 
   fastify.get('/recent-movies', async (request: FastifyRequest, reply: FastifyReply) => {

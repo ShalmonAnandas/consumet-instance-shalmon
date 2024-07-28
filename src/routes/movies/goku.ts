@@ -79,7 +79,7 @@ const routes = async (fastify: FastifyInstance, options: RegisterOptions) => {
 
     let updatedReply = await updateMoviesWithBase64Images(res);
 
-    reply.status(200).send(updatedReply);
+    reply.status(200).send(updatedReply.slice(0, 10));
   });
 
   fastify.get('/recent-movies', async (request: FastifyRequest, reply: FastifyReply) => {
@@ -102,8 +102,8 @@ const routes = async (fastify: FastifyInstance, options: RegisterOptions) => {
     try {
       if (!type) {
         const res = [
-          ...(await goku.fetchTrendingMovies()),
-          ...(await goku.fetchTrendingTvShows()),
+          ...((await goku.fetchTrendingMovies()).slice(0, 7)),
+          ...((await goku.fetchTrendingTvShows()).slice(0, 7)),
         ];
 
         let updatedReply = await updateMoviesWithBase64Images(res);
