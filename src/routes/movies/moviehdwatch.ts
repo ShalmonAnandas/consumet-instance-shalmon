@@ -103,8 +103,8 @@ const routes = async (fastify: FastifyInstance, options: RegisterOptions) => {
       if (!type) {
         const res = {
           results: [
-            ...(await movieshd.fetchTrendingMovies()),
-            ...(await movieshd.fetchTrendingTvShows()),
+            ...((await movieshd.fetchTrendingMovies()).slice(0, 7)),
+            ...((await movieshd.fetchTrendingTvShows()).slice(0, 7)),
           ],
         };
         let updatedResults = await updateMoviesWithBase64Images(res.results);

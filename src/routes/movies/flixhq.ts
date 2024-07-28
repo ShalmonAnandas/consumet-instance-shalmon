@@ -63,6 +63,9 @@ const routes = async (fastify: FastifyInstance, options: RegisterOptions) => {
       : await flixhq.search(query, page ? page : 1);
 
     let updatedReply = await updateMoviesWithBase64ImagesForSearch(res);
+    let truncatedRes = updatedReply.results.slice(0, 10);
+
+    updatedReply.results = truncatedRes;
 
     reply.status(200).send(updatedReply);
   });
@@ -101,14 +104,13 @@ const routes = async (fastify: FastifyInstance, options: RegisterOptions) => {
     const type = (request.query as { type: string }).type;
     try {
       if (!type) {
-        const res = {
-          results: [
-            ...(await flixhq.fetchTrendingMovies()),
-            ...(await flixhq.fetchTrendingTvShows()),
-          ],
-        };
-        let updatedReply = await updateMoviesWithBase64Images(res.results);
-        res.results = updatedReply;
+        let res = [
+          ...((await flixhq.fetchTrendingMovies()).slice(0, 7)),
+          ...((await flixhq.fetchTrendingTvShows()).slice(0, 7)),
+        ];
+
+        let updatedReply = await updateMoviesWithBase64Images(res);
+        res = updatedReply;
 
         return reply.status(200).send(res);
       }
